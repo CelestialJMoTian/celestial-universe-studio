@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Universe Studio</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts para visual Premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Icones FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Bar fixa -->
+    <header class="top-bar">
+        <h1 class="logo" onclick="app.navegar('inicio')">CELESTIAL UNIVERSE</h1>
+    </header>
+
+    <main id="app-content">
+        <!-- SEÇÃO: INÍCIO -->
+        <section id="view-inicio" class="view active">
+            <div class="banner-principal">
+                <div class="banner-overlay"></div>
+                <div class="banner-info">
+                    <span class="badge-destaque">DESTAQUE DA SEMANA</span>
+                    <h2 id="banner-titulo">Carregando...</h2>
+                    <p id="banner-sinopse">...</p>
+                    <button class="btn-premium" id="banner-btn">Ler Agora</button>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <h3 class="section-title"><i class="fa-solid fa-star gold"></i> Obras em Destaque</h3>
+                <div class="grid-cards" id="grid-destaques"></div>
+            </div>
+
+            <div class="section-container" style="margin-bottom: 100px;">
+                <h3 class="section-title"><i class="fa-solid fa-clock gold"></i> Atualizações Recentes</h3>
+                <div class="grid-cards" id="grid-recentes"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: BIBLIOTECA & PESQUISA -->
+        <section id="view-biblioteca" class="view">
+            <div class="section-container">
+                <h2 class="page-title">Biblioteca</h2>
+                
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Pesquisar por nome, autor ou gênero...">
+                </div>
+
+                <div class="filter-container">
+                    <button class="filter-btn active" data-status="todos">Todos</button>
+                    <button class="filter-btn" data-status="Em andamento">Em andamento</button>
+                    <button class="filter-btn" data-status="Concluído">Concluídos</button>
+                </div>
+
+                <div class="grid-cards" id="grid-biblioteca" style="margin-bottom: 100px;"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: DETALHES DA OBRA -->
+        <section id="view-obra" class="view">
+            <div class="obra-hero" id="obra-hero-bg">
+                <div class="hero-blur"></div>
+                <div class="obra-hero-content">
+                    <img src="" alt="Capa" id="obra-capa" class="obra-capa-premium">
+                    <div class="obra-meta">
+                        <h2 id="obra-titulo"></h2>
+                        <p class="obra-autor">Por <span id="obra-autor" class="gold"></span></p>
+                        <div class="obra-badges">
+                            <span class="badge" id="obra-status"></span>
+                            <span class="badge"><i class="fa-solid fa-book-open"></i> <span id="obra-caps-count"></span> Caps</span>
+                        </div>
+                        <div class="tags-container" id="obra-generos"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-container" style="margin-bottom: 100px;">
+                <div class="synopsis-card">
+                    <h3>Sinopse</h3>
+                    <p id="obra-sinopse"></p>
+                    <button class="btn-premium wide" id="btn-ler-agora-hero">LER AGORA</button>
+                </div>
+
+                <h3 class="section-title"><i class="fa-solid fa-list gold"></i> Lista de Capítulos</h3>
+                <div class="chapters-list" id="lista-capitulos"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: LEITOR VERTICAL -->
+        <section id="view-leitor" class="view">
+            <div class="reader-header">
+                <button class="btn-icon" onclick="app.voltarParaObra()"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="leitor-titulo-obra">...</h3>
+                <div style="width: 40px;"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="leitor-progresso"></div>
+            </div>
+
+            <!-- Container do PDF/Imagens -->
+            <div id="reader-viewport" class="reader-viewport"></div>
+
+            <div class="reader-navigation">
+                <button class="btn-nav" id="btn-cap-anterior"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                <button class="btn-nav" id="btn-cap-proximo">Próximo <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: SOBRE -->
+        <section id="view-sobre" class="view">
+            <div class="section-container sobre-container">
+                <div class="logo-sobre-wrapper">
+                    <h2 class="studio-title">Celestial Universe Studio</h2>
+                    <p class="tagline">"Criando mundos, capítulo por capítulo."</p>
+                </div>
+                <div class="author-card">
+                    <span class="gold-label">AUTOR PRINCIPAL</span>
+                    <h3>Celestial J. Mo Tian</h3>
+                    <p>Desenvolvedor de universos literários e visuais de alta fantasia, romance medieval, cultivação e sistemas modernos.</p>
+                </div>
+                
+                <!-- Recursos para o futuro (Mockup Visual) -->
+                <div class="future-features">
+                    <h4><i class="fa-solid fa-cubes gold"></i> Recursos Futuros (Em Breve)</h4>
+                    <div class="feature-tag-grid">
+                        <span><i class="fa-solid fa-bookmark"></i> Favoritos</span>
+                        <span><i class="fa-solid fa-history"></i> Continuar Lendo</span>
+                        <span><i class="fa-solid fa-comments"></i> Comentários</span>
+                        <span><i class="fa-solid fa-download"></i> Instalar App (PWA)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Menu Inferior Mobile-First Fixo -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-target="inicio">
+            <i class="fa-solid fa-house"></i>
+            <span>Início</span>
+        </button>
+        <button class="nav-item" data-target="biblioteca">
+            <i class="fa-solid fa-book"></i>
+            <span>Biblioteca</span>
+        </button>
+        <button class="nav-item" data-target="sobre">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Sobre</span>
+        </button>
+    </nav>
+
+    <!-- Script Principal -->
+    <script src="js/app.js"></script>
+</body>
+</html>

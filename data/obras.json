@@ -1,0 +1,15 @@
+[
+  {
+    "id": "meu-destino-e-a-mestra-da-seita",
+    "titulo": "Meu Destino é a Mestra da Seita",
+    "autor": "Celestial J. Mo Tian",
+    "status": "Em andamento",
+    "generos": ["Diferença de idade", "Fantasia", "Romance", "Sem harém", "Dia a dia", "Sistema"],
+    "sinopse": "Após perder tudo, Chen Yu desperta em um misterioso mundo de cultivo e acaba aparecendo no quarto da temida Mestra da Seita do Lótus Celestial, Lin Yue. Um encontro inesperado dá início a um vínculo capaz de unir dois mundos completamente diferentes.",
+    "pasta": "obras/meu-destino-e-a-mestra-da-seita/",
+    "capa": "obras/meu-destino-e-a-mestra-da-seita/capa.webp",
+    "capitulos": [
+      { "numero": 1, "titulo": "Capítulo 1 - Parte 1", "arquivo": "capitulo-1.pdf" }
+    ]
+  }
+]
