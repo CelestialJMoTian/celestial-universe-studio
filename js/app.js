@@ -64,7 +64,8 @@ class CelestialApp {
             "pasta": "./obras/meu-destino-e-a-mestra-da-seita/",
             "capa": "./obras/meu-destino-e-a-mestra-da-seita/capa.png", 
             "capitulos": [
-              { "numero": 1, "titulo": "Capítulo 1 - Parte 1", "arquivo": "capitulo-1.pdf" }
+              { "numero": 1, "titulo": "Capítulo 1 - Parte 1", "arquivo": "capitulo-1-1.pdf" },
+              { "numero": 2, "titulo": "Capítulo 1 - Parte 2", "arquivo": "capitulo-1-2.pdf" }
             ]
           }
         ];
