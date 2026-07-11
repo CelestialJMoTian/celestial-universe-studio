@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDGA3120Is6cytQF49ORZcZ2c9FLoqIB2o",
@@ -24,6 +24,7 @@ class CelestialApp {
         this.capituloAtualIdx = -1;
         this.usuarioLogado = null;
         this.unsubComentarios = null;
+        this.unsubAvaliacoes = null; // NOVO: Controle das estrelas
         
         this.apelido = localStorage.getItem('celestial_apelido');
         this.corFlor = localStorage.getItem('celestial_cor_flor') || '0deg';
@@ -76,11 +77,11 @@ class CelestialApp {
         this.initLoginHibrido();
         this.initFirebaseAuthListen();
         
-        // Garante que o usuário com apelido já veja a UI correta no carregamento
         this.atualizarUIUsuario(); 
         
         this.initSeletorFlor();
         await this.carregarDados();
+        this.renderizarFiltrosGeneros(); // NOVO: Gera os botões de gêneros
         this.renderizarHome();
         this.renderizarBiblioteca(this.obras);
         this.renderizarFavoritos();
@@ -114,8 +115,11 @@ class CelestialApp {
             }
             if(userCommentName) userCommentName.innerText = this.usuarioLogado.displayName;
             
+            // Re-inicializar avaliação para pegar o voto do usuário caso já tenha aberto a obra
+            if (this.obraAtual) this.inicializarAvaliacao(this.obraAtual.id);
+            
         } else if (this.apelido) {
-            // Logado com Apelido (Mostra a Flor Colorida)
+            // Logado com Apelido
             if(btnLoginMenu) btnLoginMenu.style.display = 'none';
             if(profileNav) profileNav.style.display = 'flex';
             if(userPhoto) {
@@ -129,12 +133,14 @@ class CelestialApp {
                 userCommentAvatar.style.filter = `hue-rotate(${this.corFlor}) saturate(200%) brightness(1.2)`;
             }
             if(userCommentName) userCommentName.innerText = this.apelido;
+            if (this.obraAtual) this.inicializarAvaliacao(this.obraAtual.id);
         } else {
             // Deslogado
             if(btnLoginMenu) btnLoginMenu.style.display = 'flex';
             if(profileNav) profileNav.style.display = 'none';
             if(commentLoggedOut) commentLoggedOut.style.display = 'block';
             if(commentLoggedIn) commentLoggedIn.style.display = 'none';
+            if (this.obraAtual) this.inicializarAvaliacao(this.obraAtual.id);
         }
     }
 
@@ -193,9 +199,10 @@ class CelestialApp {
             });
         });
 
-        document.querySelectorAll('.filter-btn').forEach(btn => {
+        // Delegação de eventos para os filtros principais (status)
+        document.querySelectorAll('.filter-container:not(#filter-genres-container) .filter-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.filter-container:not(#filter-genres-container) .filter-btn').forEach(b => b.classList.remove('active'));
                 e.currentTarget.classList.add('active');
                 this.filtrarBiblioteca();
             });
@@ -238,6 +245,42 @@ class CelestialApp {
         ];
     }
 
+    // NOVO: Geração dinâmica dos Filtros de Gêneros
+    renderizarFiltrosGeneros() {
+        const container = document.getElementById('filter-genres-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        // Coletar todos os gêneros únicos
+        const todosGeneros = new Set();
+        this.obras.forEach(obra => obra.generos.forEach(g => todosGeneros.add(g)));
+        const generosOrdenados = Array.from(todosGeneros).sort();
+
+        // Botão padrão "Todos"
+        const btnTodos = document.createElement('button');
+        btnTodos.className = 'filter-btn genre-btn active';
+        btnTodos.dataset.genero = 'todos';
+        btnTodos.innerText = 'Todos os Gêneros';
+        btnTodos.onclick = (e) => this.selecionarFiltroGenero(e.currentTarget);
+        container.appendChild(btnTodos);
+
+        // Gerar botão para cada gênero encontrado
+        generosOrdenados.forEach(g => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn genre-btn';
+            btn.dataset.genero = g;
+            btn.innerText = g;
+            btn.onclick = (e) => this.selecionarFiltroGenero(e.currentTarget);
+            container.appendChild(btn);
+        });
+    }
+
+    selecionarFiltroGenero(btnSelecionado) {
+        document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        btnSelecionado.classList.add('active');
+        this.filtrarBiblioteca();
+    }
+
     navegar(viewId) {
         document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
         const targetView = document.getElementById(`view-${viewId}`);
@@ -247,9 +290,11 @@ class CelestialApp {
         }
         if (viewId === 'favoritos') this.renderizarFavoritos();
         if (viewId === 'inicio') this.renderizarHistoricoHome();
-        if (viewId !== 'obra' && this.unsubComentarios) {
-            this.unsubComentarios();
-            this.unsubComentarios = null;
+        
+        // Limpar listeners quando sair da obra
+        if (viewId !== 'obra') {
+            if (this.unsubComentarios) { this.unsubComentarios(); this.unsubComentarios = null; }
+            if (this.unsubAvaliacoes) { this.unsubAvaliacoes(); this.unsubAvaliacoes = null; }
         }
     }
 
@@ -257,11 +302,9 @@ class CelestialApp {
         if (this.obras.length === 0) return;
         const destaque = this.obras[0];
         
-        // Atualiza textos do banner
         if(document.getElementById('banner-titulo')) document.getElementById('banner-titulo').innerText = destaque.titulo;
         if(document.getElementById('banner-sinopse')) document.getElementById('banner-sinopse').innerText = destaque.sinopse;
         
-        // Atualiza a capa (Área 1 do seu desenho)
         const imgCapa = document.getElementById('banner-capa-img');
         if (imgCapa) imgCapa.src = destaque.capa;
         
@@ -297,7 +340,7 @@ class CelestialApp {
             const capIdx = this.historico[obra.id];
             if (obra.capitulos[capIdx]) {
                 const tituloCurto = obra.capitulos[capIdx].titulo.split(' - ')[0];
-                if (exibirBadgeHistorico || document.querySelector('.filter-btn.active')?.dataset.status === 'historico') {
+                if (exibirBadgeHistorico || document.querySelector('.filter-btn:not(.genre-btn).active')?.dataset.status === 'historico') {
                     badgeHTML = `<div class="badge-historico">Parou: ${tituloCurto}</div>`;
                 }
             }
@@ -311,7 +354,7 @@ class CelestialApp {
         const grid = document.getElementById('grid-biblioteca');
         if (!grid) return;
         grid.innerHTML = '';
-        if (lista.length === 0) { grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #A0A0A0; margin-top: 40px;">Nenhuma obra encontrada.</p>`; return; }
+        if (lista.length === 0) { grid.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: #A0A0A0; margin-top: 40px;">Nenhuma obra encontrada com estes filtros.</p>`; return; }
         lista.forEach(obra => grid.appendChild(this.criarCardObra(obra)));
     }
 
@@ -343,18 +386,181 @@ class CelestialApp {
 
     filtrarBiblioteca() {
         const queryInput = document.getElementById('search-input');
-        const query = queryInput ? queryInput.value.toLowerCase() : "";
-        const btnAtivo = document.querySelector('.filter-btn.active');
-        const statusAtivo = btnAtivo ? btnAtivo.dataset.status : "todos";
+        const queryTerm = queryInput ? queryInput.value.toLowerCase() : "";
+        
+        // Coleta status (Andamento, Concluído, etc)
+        const btnStatusAtivo = document.querySelector('.filter-container:not(#filter-genres-container) .filter-btn.active');
+        const statusAtivo = btnStatusAtivo ? btnStatusAtivo.dataset.status : "todos";
+        
+        // Coleta Gênero (Novo)
+        const btnGeneroAtivo = document.querySelector('.genre-btn.active');
+        const generoAtivo = btnGeneroAtivo ? btnGeneroAtivo.dataset.genero : "todos";
+
         const filtradas = this.obras.filter(obra => {
-            const correspondeQuery = obra.titulo.toLowerCase().includes(query) || obra.autor.toLowerCase().includes(query) || obra.generos.some(g => g.toLowerCase().includes(query));
+            // Regra de Texto
+            const correspondeQuery = obra.titulo.toLowerCase().includes(queryTerm) || obra.autor.toLowerCase().includes(queryTerm);
+            
+            // Regra de Status
             let correspondeStatus = false;
             if (statusAtivo === 'todos') correspondeStatus = true;
             else if (statusAtivo === 'historico') correspondeStatus = Object.keys(this.historico).includes(obra.id);
             else correspondeStatus = (obra.status === statusAtivo);
-            return correspondeQuery && correspondeStatus;
+            
+            // Regra de Gênero
+            let correspondeGenero = true;
+            if (generoAtivo !== 'todos') correspondeGenero = obra.generos.includes(generoAtivo);
+
+            return correspondeQuery && correspondeStatus && correspondeGenero;
         });
         this.renderizarBiblioteca(filtradas);
+    }
+
+    // NOVO: Sistema de Avaliação Estrelas
+    inicializarAvaliacao(obraId) {
+        const starsDisplay = document.getElementById('stars-display');
+        const msg = document.getElementById('rating-msg');
+        const mediaDisplay = document.getElementById('rating-media');
+        
+        // Reseta visual da UI
+        this.resetarEstrelasUI();
+        msg.innerText = "Carregando...";
+        mediaDisplay.innerText = "0.0";
+        starsDisplay.classList.remove('interactive');
+        
+        if (this.unsubAvaliacoes) this.unsubAvaliacoes();
+
+        // Leitura em tempo real do banco de dados (coleção avaliacoes)
+        const avaliacoesRef = collection(db, `obras/${obraId}/avaliacoes`);
+        this.unsubAvaliacoes = onSnapshot(avaliacoesRef, (snapshot) => {
+            
+            if (snapshot.empty) {
+                mediaDisplay.innerText = "0.0";
+                if (!this.usuarioLogado) {
+                    msg.innerText = "Faça login com Google para avaliar.";
+                } else {
+                    msg.innerText = "Seja o primeiro a avaliar!";
+                    this.habilitarVotoUI(obraId);
+                }
+                return;
+            }
+
+            let totalNotas = 0;
+            let votoUsuario = null;
+
+            // Calcula a média e checa se o usuário atual votou
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                totalNotas += data.nota;
+                if (this.usuarioLogado && doc.id === this.usuarioLogado.uid) {
+                    votoUsuario = data.nota;
+                }
+            });
+
+            const media = (totalNotas / snapshot.size).toFixed(1);
+            mediaDisplay.innerText = media;
+
+            // Organiza as mensagens e libera a votação
+            if (!this.usuarioLogado) {
+                msg.innerText = "Faça login com Google para avaliar.";
+                starsDisplay.classList.remove('interactive');
+            } else if (votoUsuario) {
+                msg.innerText = `Você avaliou com ${votoUsuario} estrelas.`;
+                this.mostrarVotoSalvoUI(votoUsuario);
+            } else {
+                msg.innerText = "Deixe sua avaliação!";
+                this.habilitarVotoUI(obraId);
+            }
+        });
+    }
+
+    habilitarVotoUI(obraId) {
+        const starsDisplay = document.getElementById('stars-display');
+        starsDisplay.classList.add('interactive');
+        
+        const estrelas = starsDisplay.querySelectorAll('i');
+        
+        // Remove listeners antigos (clone node)
+        estrelas.forEach(estrela => {
+            const clone = estrela.cloneNode(true);
+            estrela.parentNode.replaceChild(clone, estrela);
+        });
+        
+        // Adiciona interatividade
+        const novasEstrelas = starsDisplay.querySelectorAll('i');
+        novasEstrelas.forEach(estrela => {
+            estrela.addEventListener('mouseover', (e) => this.destacarEstrelasUI(e.target.dataset.value));
+            estrela.addEventListener('mouseout', () => this.resetarEstrelasUI());
+            estrela.addEventListener('click', (e) => this.votarFirebase(obraId, e.target.dataset.value));
+        });
+    }
+
+    destacarEstrelasUI(valor) {
+        const estrelas = document.querySelectorAll('#stars-display i');
+        estrelas.forEach(estrela => {
+            if (parseInt(estrela.dataset.value) <= parseInt(valor)) {
+                estrela.classList.add('fa-solid');
+                estrela.classList.remove('fa-regular');
+                estrela.style.color = 'var(--gold)';
+            } else {
+                estrela.classList.remove('fa-solid');
+                estrela.classList.add('fa-regular');
+                estrela.style.color = '';
+            }
+        });
+    }
+
+    resetarEstrelasUI() {
+        const estrelas = document.querySelectorAll('#stars-display i');
+        estrelas.forEach(estrela => {
+            estrela.classList.remove('fa-solid');
+            estrela.classList.add('fa-regular');
+            estrela.style.color = '';
+        });
+    }
+
+    mostrarVotoSalvoUI(nota) {
+        const starsDisplay = document.getElementById('stars-display');
+        starsDisplay.classList.remove('interactive');
+        
+        // Remove os eventos de click para impedir mudança
+        const estrelas = starsDisplay.querySelectorAll('i');
+        estrelas.forEach(estrela => {
+            const clone = estrela.cloneNode(true);
+            starsDisplay.replaceChild(clone, estrela);
+        });
+
+        // Preenche apenas as estrelas da nota dada pelo usuário
+        const novasEstrelas = starsDisplay.querySelectorAll('i');
+        novasEstrelas.forEach(estrela => {
+            if (parseInt(estrela.dataset.value) <= nota) {
+                estrela.classList.add('fa-solid');
+                estrela.classList.remove('fa-regular');
+                estrela.style.color = 'var(--gold)';
+            } else {
+                estrela.classList.remove('fa-solid');
+                estrela.classList.add('fa-regular');
+                estrela.style.color = '';
+            }
+        });
+    }
+
+    async votarFirebase(obraId, nota) {
+        if (!this.usuarioLogado) {
+            alert("Você precisa fazer login com o Google para avaliar!");
+            return;
+        }
+        try {
+            // Salva um documento com o UID do usuário. Garante apenas 1 voto por perfil.
+            const avaliacaoRef = doc(db, `obras/${obraId}/avaliacoes`, this.usuarioLogado.uid);
+            await setDoc(avaliacaoRef, {
+                nota: parseInt(nota),
+                data: new Date().getTime()
+            });
+            // O update na UI será automático via onSnapshot que já declaramos na função inicializarAvaliacao
+        } catch (error) {
+            console.error("Erro ao salvar avaliação", error);
+            alert("Erro ao enviar avaliação. As regras de escrita do Firestore estão liberadas?");
+        }
     }
 
     escutarComentariosFirebase(obraId) {
@@ -376,7 +582,6 @@ class CelestialApp {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'card-comentario-item';
                 
-                // Aplica o filtro de cor na foto apenas se for um apelido (sem Google Auth)
                 const filtroCSS = dados.corFlor ? `filter: hue-rotate(${dados.corFlor}) saturate(200%) brightness(1.2);` : '';
                 
                 itemDiv.innerHTML = `
@@ -408,7 +613,7 @@ class CelestialApp {
             const uid = this.usuarioLogado ? this.usuarioLogado.uid : 'anon_' + Date.now();
             const nome = this.usuarioLogado ? this.usuarioLogado.displayName : this.apelido;
             const foto = this.usuarioLogado ? this.usuarioLogado.photoURL : 'imagem/flor-branca.png';
-            const cor = this.usuarioLogado ? null : this.corFlor; // Envia a cor escolhida
+            const cor = this.usuarioLogado ? null : this.corFlor;
 
             await addDoc(collection(db, `obras/${this.obraAtual.id}/comentarios`), {
                 texto: textoComentario, 
@@ -470,7 +675,9 @@ class CelestialApp {
                 else if (obra.capitulos.length > 0) this.abrirLeitor(0);
             };
         }
-        this.escutarComentariosFirebase(obra.id);
+        
+        this.inicializarAvaliacao(obra.id); // Inicia as estrelas
+        this.escutarComentariosFirebase(obra.id); // Inicia os comentários
         this.navegar('obra');
     }
 
