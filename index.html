@@ -19,13 +19,34 @@
         <div class="top-bar-container">
             <img src="imagem/logo.png" alt="Celestial Universe Studio" class="logo-img" onclick="app.navegar('inicio')">
             <div class="header-actions">
-                <!-- Área do Usuário / Login do Google -->
-                <div id="user-auth-area" style="display: flex; align-items: center; gap: 10px;">
-                    <button class="btn-google-login" id="btn-login-google" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 0.75rem; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-brands fa-google gold"></i> Entrar</button>
+                
+                <!-- NOVA ÁREA DO USUÁRIO: LOGIN HÍBRIDO -->
+                <div id="user-auth-area" style="position: relative; display: flex; align-items: center; gap: 10px;">
+                    <!-- Botão Principal que abre o Modal -->
+                    <button id="btn-login-menu" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 0.75rem; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-user gold"></i> <span id="label-usuario">Entrar</span>
+                    </button>
+                    
+                    <!-- Modal Suspenso de Escolha -->
+                    <div id="modal-login" style="display:none; position:absolute; top:45px; right:0; background:var(--bg-surface-light); padding:15px; border-radius:10px; border:1px solid var(--gold); z-index:999; width: 220px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; text-align: center;">Acesso Rápido (Offline)</p>
+                        <input type="text" id="input-apelido" placeholder="Definir Apelido..." style="width:100%; margin-bottom:8px; padding:8px; background:var(--bg-dark); border:1px solid rgba(255,255,255,0.1); color:#fff; border-radius:6px; font-size:0.8rem; outline:none;">
+                        <button id="btn-login-interno" class="btn-premium" style="width:100%; margin-bottom:15px; padding:8px; font-size:0.75rem;">Salvar Apelido</button>
+                        
+                        <div style="height: 1px; background: rgba(255,255,255,0.1); margin-bottom: 15px;"></div>
+                        
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; text-align: center;">Acesso Completo (Online)</p>
+                        <button id="btn-login-google-modal" class="btn-premium-yellow" style="width:100%; padding:8px; font-size:0.75rem; display: flex; align-items: center; justify-content: center; gap: 6px;"><i class="fa-brands fa-google"></i> Google</button>
+                    </div>
+
+                    <!-- Perfil visível após login com Google -->
                     <div id="user-profile-nav" style="display: none; align-items: center; gap: 8px;">
                         <img id="user-photo-nav" src="" alt="Perfil" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold);">
+                        <button onclick="app.logout()" style="background:none; border:none; color:var(--text-muted); cursor:pointer; font-size: 1.1rem;"><i class="fa-solid fa-right-from-bracket"></i></button>
                     </div>
                 </div>
+                <!-- FIM DA ÁREA DE LOGIN -->
+
                 <button class="btn-icon-top" onclick="app.navegar('biblioteca')"><i class="fa-solid fa-magnifying-glass"></i></button>
                 <button class="btn-icon-top" onclick="app.navegar('favoritos')"><i class="fa-solid fa-heart red-vibrant"></i></button>
             </div>
