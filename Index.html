@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Universe Studio</title>
+    <!-- Favicon da guia do navegador -->
+    <link rel="icon" type="image/png" href="imagem/favicon.png">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Google Fonts para visual Premium -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Icones FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Bar fixa Premium com Logo em Imagem e Ícones à Direita -->
+    <header class="top-bar">
+        <div class="top-bar-container">
+            <img src="imagem/logo.png" alt="Celestial Universe Studio" class="logo-img" onclick="app.navegar('inicio')">
+            <div class="header-actions">
+                <!-- Área do Usuário / Login do Google -->
+                <div id="user-auth-area" style="display: flex; align-items: center; gap: 10px;">
+                    <button class="btn-google-login" id="btn-login-google" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: #fff; padding: 6px 12px; font-size: 0.75rem; border-radius: 20px; cursor: pointer; display: flex; align-items: center; gap: 6px;"><i class="fa-brands fa-google gold"></i> Entrar</button>
+                    <div id="user-profile-nav" style="display: none; align-items: center; gap: 8px;">
+                        <img id="user-photo-nav" src="" alt="Perfil" style="width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--gold);">
+                    </div>
+                </div>
+                <button class="btn-icon-top" onclick="app.navegar('biblioteca')"><i class="fa-solid fa-magnifying-glass"></i></button>
+                <button class="btn-icon-top" onclick="app.navegar('favoritos')"><i class="fa-solid fa-heart red-vibrant"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main id="app-content">
+        <!-- SEÇÃO: INÍCIO -->
+        <section id="view-inicio" class="view active">
+            <!-- Banner Principal Customizado de Alta Imersão -->
+            <div class="banner-principal" id="banner-principal">
+                <div class="banner-overlay"></div>
+                <div class="banner-info">
+                    <span class="badge-destaque">DESTAQUE DA SEMANA</span>
+                    <h2 id="banner-titulo">Carregando...</h2>
+                    <p id="banner-sinopse">...</p>
+                    <button class="btn-premium-yellow" id="banner-btn">Ler Agora</button>
+                </div>
+            </div>
+
+            <!-- Novos Blocos de Atalho Premium (Lançamentos e Histórias) -->
+            <div class="section-container quick-actions-container">
+                <div class="quick-actions-grid">
+                    <div class="action-card">
+                        <i class="fa-solid fa-seedling action-icon-red"></i>
+                        <div class="action-text">
+                            <h4>LANÇAMENTOS</h4>
+                            <p class="red-sub">TODA SEMANA</p>
+                        </div>
+                    </div>
+                    <div class="action-divider"></div>
+                    <div class="action-card">
+                        <i class="fa-solid fa-torii-gate action-icon-red"></i>
+                        <div class="action-text">
+                            <h4>HISTÓRIAS QUE</h4>
+                            <p class="red-sub">CONECTAM MUNDOS</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEÇÃO: CONTINUE LENDO (HISTÓRICO NA HOME) -->
+            <div class="section-container" id="section-continue-lendo" style="display: none;">
+                <h3 class="section-title"><i class="fa-solid fa-history gold"></i> Continue Lendo</h3>
+                <div class="grid-cards" id="grid-historico-home"></div>
+            </div>
+
+            <div class="section-container">
+                <h3 class="section-title"><i class="fa-solid fa-star gold"></i> Obras em Destaque</h3>
+                <div class="grid-cards" id="grid-destaques"></div>
+            </div>
+
+            <div class="section-container" style="margin-bottom: 100px;">
+                <h3 class="section-title"><i class="fa-solid fa-clock gold"></i> Atualizações Recentes</h3>
+                <div class="grid-cards" id="grid-recentes"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: BIBLIOTECA & PESQUISA -->
+        <section id="view-biblioteca" class="view">
+            <div class="section-container">
+                <h2 class="page-title" style="font-family:'Cinzel',serif; font-size:1.8rem; margin-bottom:15px;">Biblioteca</h2>
+                
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Pesquisar por nome, autor ou gênero...">
+                </div>
+
+                <div class="filter-container">
+                    <button class="filter-btn active" data-status="todos">Todos</button>
+                    <button class="filter-btn" data-status="Em andamento">Em andamento</button>
+                    <button class="filter-btn" data-status="Concluído">Concluídos</button>
+                    <button class="filter-btn" data-status="historico">Continue Lendo</button>
+                </div>
+
+                <div class="grid-cards" id="grid-biblioteca" style="margin-bottom: 100px;"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: FAVORITOS -->
+        <section id="view-favoritos" class="view">
+            <div class="section-container">
+                <h2 class="page-title" style="font-family:'Cinzel',serif; font-size:1.8rem; margin-bottom:15px;"><i class="fa-solid fa-heart red-vibrant"></i> Meus Favoritos</h2>
+                <div class="grid-cards" id="grid-favoritos" style="margin-bottom: 100px;"></div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: DETALHES DA OBRA -->
+        <section id="view-obra" class="view">
+            <div class="obra-hero" id="obra-hero-bg">
+                <div class="hero-blur"></div>
+                <div class="obra-hero-content">
+                    <img src="" alt="Capa" id="obra-capa" class="obra-capa-premium">
+                    <div class="obra-meta">
+                        <h2 id="obra-titulo"></h2>
+                        <p class="obra-autor">Por <span id="obra-autor" class="gold"></span></p>
+                        <div class="obra-badges">
+                            <span class="badge" id="obra-status"></span>
+                            <span class="badge"><i class="fa-solid fa-book-open"></i> <span id="obra-caps-count"></span> Caps</span>
+                        </div>
+                        <div class="tags-container" id="obra-generos"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-container">
+                <div class="synopsis-card">
+                    <h3>Sinopse</h3>
+                    <p id="obra-sinopse"></p>
+                    <div class="obra-action-buttons-group" style="display:flex; gap:12px; margin-top:20px;">
+                        <button class="btn-premium" id="btn-ler-agora-hero" style="flex:1; padding:14px;">LER AGORA</button>
+                        <button class="btn-fav-toggle" id="btn-favoritar-obra" style="width:55px; border-radius:14px; border:1px solid rgba(255,255,255,0.08); background:#1A1C20; color:#fff; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.3s;"><i class="fa-regular fa-heart"></i></button>
+                    </div>
+                </div>
+
+                <h3 class="section-title"><i class="fa-solid fa-list gold"></i> Lista de Capítulos</h3>
+                <div class="chapters-list" id="lista-capitulos"></div>
+            </div>
+
+            <!-- NOVA ÁREA DE COMENTÁRIOS GLOBAIS COM FIREBASE -->
+            <div class="section-container" style="margin-bottom: 100px;">
+                <h3 class="section-title"><i class="fa-solid fa-comments gold"></i> Comentários da Comunidade</h3>
+                
+                <div class="comment-box-container" style="background: var(--bg-surface); padding: 15px; border-radius: var(--border-radius); border: 1px solid rgba(255,255,255,0.02); margin-bottom: 20px;">
+                    <!-- Bloqueio visual se não estiver logado -->
+                    <div id="comment-logged-out" style="text-align: center; padding: 10px 0;">
+                        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 10px;">Você precisa estar conectado para deixar um comentário.</p>
+                        <button class="btn-premium-yellow" onclick="app.loginGoogle()" style="padding: 8px 20px; font-size: 0.75rem;">Fazer Login com o Google</button>
+                    </div>
+                    
+                    <!-- Form de Comentários ativo se logado -->
+                    <div id="comment-logged-in" style="display: none; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <img id="user-comment-avatar" src="" style="width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gold);">
+                            <span id="user-comment-name" style="font-size: 0.85rem; font-weight: 500;">...</span>
+                        </div>
+                        <textarea id="input-comentario" placeholder="O que achou desta obra? Deixe seu comentário sincero..." style="width: 100%; height: 80px; background: var(--bg-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; padding: 10px; color: #fff; font-family: inherit; font-size: 0.85rem; resize: none; outline: none; transition: var(--transition);"></textarea>
+                        <button class="btn-premium" id="btn-enviar-comentario" style="align-self: flex-end; padding: 8px 20px; font-size: 0.75rem;">Publicar Comentário</button>
+                    </div>
+                </div>
+
+                <!-- Lista onde renderizam os comentários vindos do Firebase -->
+                <div id="container-comentarios-lista" style="display: flex; flex-direction: column; gap: 12px;">
+                    <p style="text-align: center; color: var(--text-muted); font-size: 0.85rem;">Carregando comentários...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: LEITOR VERTICAL -->
+        <section id="view-leitor" class="view">
+            <div class="reader-header">
+                <button class="btn-icon" onclick="app.voltarParaObra()"><i class="fa-solid fa-arrow-left"></i></button>
+                <h3 id="leitor-titulo-obra">...</h3>
+                <div style="width: 40px;"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="leitor-progresso"></div>
+            </div>
+
+            <!-- Container do PDF/Imagens -->
+            <div id="reader-viewport" class="reader-viewport"></div>
+
+            <div class="reader-navigation">
+                <button class="btn-nav" id="btn-cap-anterior"><i class="fa-solid fa-chevron-left"></i> Anterior</button>
+                <button class="btn-nav" id="btn-cap-proximo">Próximo <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- SEÇÃO: SOBRE -->
+        <section id="view-sobre" class="view">
+            <div class="section-container sobre-container">
+                <div class="logo-sobre-wrapper">
+                    <h2 class="studio-title">Celestial Universe Studio</h2>
+                    <p class="tagline">"Criando mundos, capítulo por capítulo."</p>
+                </div>
+                <div class="author-card">
+                    <span class="gold-label">AUTOR PRINCIPAL</span>
+                    <h3>Celestial J. Mo Tian</h3>
+                    <p>Desenvolvedor de universos literários e visuais de alta fantasia, romance medieval, cultivação e sistemas modernos.</p>
+                </div>
+                
+                <!-- Recursos para o futuro (Mockup Visual) -->
+                <div class="future-features">
+                    <h4><i class="fa-solid fa-cubes gold"></i> Recursos Futuros (Em Breve)</h4>
+                    <div class="feature-tag-grid">
+                        <span><i class="fa-solid fa-bookmark"></i> Favoritos</span>
+                        <span><i class="fa-solid fa-history"></i> Continuar Lendo</span>
+                        <span><i class="fa-solid fa-comments"></i> Comentários</span>
+                        <span><i class="fa-solid fa-download"></i> Instalar App (PWA)</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Menu Inferior Mobile-First Fixo -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-target="inicio">
+            <i class="fa-solid fa-house"></i>
+            <span>Início</span>
+        </button>
+        <button class="nav-item" data-target="biblioteca">
+            <i class="fa-solid fa-book"></i>
+            <span>Biblioteca</span>
+        </button>
+        <button class="nav-item" data-target="sobre">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Sobre</span>
+        </button>
+    </nav>
+
+    <!-- Script Principal alterado para tipo módulo para carregar o Firebase corretamente -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>
