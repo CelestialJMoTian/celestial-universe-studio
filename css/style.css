@@ -31,7 +31,7 @@ body {
 ::-webkit-scrollbar-track { background: var(--bg-dark); }
 ::-webkit-scrollbar-thumb { background: var(--bg-surface-light); border-radius: 10px; }
 
-/* Interfaces Fixas Alteradas para o Novo Layout */
+/* Interfaces Fixas */
 .top-bar {
     position: fixed;
     top: 0; left: 0; right: 0; height: 65px;
@@ -69,6 +69,23 @@ body {
 }
 .btn-icon-top:hover {
     color: var(--gold);
+}
+
+/* Estilo para a miniatura do usuário no Header */
+.nav-user-img {
+    width: 28px; 
+    height: 28px; 
+    border-radius: 50%; 
+    border: 1px solid var(--gold);
+    object-fit: cover;
+    transition: filter 0.3s;
+}
+
+/* Novo Controle de Áudio Suspenso */
+#audio-container:hover #volume-slider,
+#audio-container:active #volume-slider,
+#volume-slider:active {
+    display: block !important;
 }
 
 /* Elementos do Firebase e Balão de Comentários */
@@ -155,25 +172,56 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Banner Principal Integrado Sombrio */
+/* -------------------------------------
+   NOVO BANNER PRINCIPAL COM VÍDEO
+----------------------------------------*/
 .banner-principal {
     position: relative;
-    width: 100%; height: 50vh;
-    background: linear-gradient(135deg, #121315, #070708);
-    background-size: cover;
-    background-position: center top;
-    display: flex; align-items: flex-end;
+    width: 100%; 
+    min-height: 55vh;
+    background: var(--bg-dark);
+    display: flex; 
+    align-items: center; 
     overflow: hidden;
+}
+.banner-video-bg {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translateX(-50%) translateY(-50%);
+    z-index: 0;
+    object-fit: cover;
 }
 .banner-overlay {
     position: absolute; inset: 0;
-    background: linear-gradient(to top, var(--bg-dark) 8%, rgba(7, 7, 8, 0.45) 60%, rgba(7, 7, 8, 0.2) 100%),
-                linear-gradient(to right, rgba(7, 7, 8, 0.6) 0%, transparent 70%);
+    /* Escurece o fundo para dar destaque ao texto e à capa */
+    background: linear-gradient(to top, var(--bg-dark) 5%, rgba(7, 7, 8, 0.7) 40%, rgba(7, 7, 8, 0.3) 100%),
+                linear-gradient(to right, rgba(7, 7, 8, 0.95) 0%, rgba(7,7,8,0.3) 100%);
+    z-index: 1;
 }
-.banner-info {
-    position: relative; z-index: 2;
-    padding: 25px; max-width: 550px;
-    margin-bottom: 10px;
+.banner-content-grid {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 85px 20px 30px 20px; /* Espaço pro cabeçalho */
+    gap: 20px;
+}
+.banner-info-left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 600px;
 }
 .badge-destaque {
     background: #901A1E; color: #FFFFFF;
@@ -181,7 +229,7 @@ body {
     padding: 4px 10px; border-radius: 4px;
     letter-spacing: 0.8px; display: inline-block; margin-bottom: 14px;
 }
-.banner-info h2 { 
+.banner-info-left h2 { 
     font-family: 'Cinzel', serif; 
     font-size: 2rem; 
     line-height: 1.25;
@@ -189,15 +237,31 @@ body {
     color: #fff; 
     letter-spacing: 0.5px;
 }
-.banner-info p { 
+.banner-info-left p { 
     color: #A4A8B0; 
     font-size: 0.82rem; 
     line-height: 1.5;
     margin-bottom: 20px; 
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; 
 }
+.banner-cover-right {
+    flex: 0 0 120px; /* Largura para manter a proporção no mobile */
+    display: flex;
+    justify-content: center;
+}
+.banner-cover-right img {
+    width: 100%;
+    aspect-ratio: 2/3;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.7);
+    border: 2px solid rgba(212,175,55,0.4);
+}
+@media (min-width: 768px) {
+    .banner-cover-right { flex: 0 0 200px; }
+}
+/*--------------------------------------*/
 
-/* Botão Amarelo/Dourado Premium do Banner */
 .btn-premium-yellow {
     background: linear-gradient(to right, #C69A27, #9B7414);
     color: #000000; font-weight: 600; font-size: 0.82rem;
@@ -207,7 +271,6 @@ body {
 }
 .btn-premium-yellow:hover { transform: scale(1.02); box-shadow: 0 6px 20px rgba(155, 116, 20, 0.4); }
 
-/* Novos Blocos de Ações Rápidas (Lançamentos / Histórias) */
 .quick-actions-container {
     padding-top: 5px;
     padding-bottom: 25px;
@@ -252,7 +315,6 @@ body {
     margin-top: 1px;
 }
 
-/* Botões Premium Padrão */
 .btn-premium {
     background: linear-gradient(135deg, #D4AF37, #AA7C11);
     color: #0d0d0d; font-weight: 600; font-size: 0.9rem;
@@ -263,7 +325,6 @@ body {
 .btn-premium:hover { transform: scale(1.03); box-shadow: 0 6px 20px rgba(212,175,55,0.5); }
 .btn-premium.wide { width: 100%; display: block; text-align: center; margin-top: 15px; padding: 14px; }
 
-/* Grid de Cards */
 .grid-cards {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -271,7 +332,6 @@ body {
 }
 @media (min-width: 768px) { .grid-cards { grid-template-columns: repeat(5, 1fr); gap: 25px; } }
 
-/* Cards de Obras Customizados */
 .card-obra {
     background: var(--bg-surface);
     border-radius: var(--border-radius);
@@ -288,7 +348,6 @@ body {
 .card-info h4 { font-size: 0.85rem; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card-info p { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
 
-/* Pesquisa e Filtros */
 .search-wrapper { position: relative; margin: 20px 0; }
 .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
 #search-input {
@@ -306,7 +365,6 @@ body {
 }
 .filter-btn.active { background: rgba(212,175,55,0.1); color: var(--gold); border-color: var(--gold); }
 
-/* Detalhes da Obra */
 .obra-hero { position: relative; padding: 40px 20px; min-height: 35vh; display: flex; align-items: center; overflow: hidden; }
 .hero-blur { position: absolute; inset: 0; background-size: cover; background-position: center; filter: blur(30px) brightness(0.4); transform: scale(1.1); z-index: 1; }
 .obra-hero-content { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 20px; width: 100%; }
@@ -326,7 +384,6 @@ body {
 .synopsis-card { background: var(--bg-surface); padding: 20px; border-radius: var(--border-radius); margin: 25px 0; border: 1px solid rgba(255,255,255,0.02); }
 .synopsis-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; }
 
-/* Lista de Capítulos */
 .chapters-list { display: flex; flex-direction: column; gap: 10px; }
 .chapter-row {
     background: var(--bg-surface); padding: 15px 20px; border-radius: var(--border-radius);
@@ -336,7 +393,6 @@ body {
 .chapter-row:hover { border-color: rgba(212,175,55,0.2); background: var(--bg-surface-light); }
 .chapter-title { font-size: 0.9rem; font-weight: 500; }
 
-/* Leitor Vertical */
 .reader-header {
     position: fixed; top: 0; left: 0; right: 0; height: 55px;
     background: var(--bg-dark); border-bottom: 1px solid rgba(255,255,255,0.05);
@@ -353,7 +409,6 @@ body {
 .btn-nav { flex: 1; background: var(--bg-surface); color: var(--text-main); border: 1px solid rgba(212,175,55,0.2); padding: 14px; border-radius: var(--border-radius); font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-nav:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Tela Sobre */
 .sobre-container { text-align: center; padding-top: 40px; }
 .studio-title { font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold); }
 .tagline { color: var(--text-muted); font-style: italic; margin-bottom: 30px; font-size: 0.95rem; }
@@ -366,7 +421,6 @@ body {
 .feature-tag-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
 .feature-tag-grid span { background: var(--bg-surface-light); font-size: 0.8rem; padding: 8px 14px; border-radius: 30px; color: var(--text-muted); border: 1px solid rgba(255,255,255,0.02); }
 
-/* Menu Inferior Fixo */
 .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0; height: 65px;
     background: #000000; border-top: 1px solid rgba(255, 255, 255, 0.04);

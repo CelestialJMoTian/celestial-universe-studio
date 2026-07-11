@@ -25,21 +25,143 @@ class CelestialApp {
         this.usuarioLogado = null;
         this.unsubComentarios = null;
         
-        // Dados locais
         this.apelido = localStorage.getItem('celestial_apelido');
+        this.corFlor = localStorage.getItem('celestial_cor_flor') || '0deg';
         this.favoritos = JSON.parse(localStorage.getItem('celestial_favoritos')) || [];
         this.historico = JSON.parse(localStorage.getItem('celestial_historico')) || {};
+        
+        this.audio = document.getElementById('bg-music');
+        this.initAudio();
         this.init();
+    }
+
+    initAudio() {
+        if (!this.audio) return;
+        this.audio.muted = true;
+        const volumeVisual = parseFloat(localStorage.getItem('musica_vol') || '0.5');
+        this.audio.volume = volumeVisual * 0.5; 
+        
+        const btnMute = document.getElementById('btn-mute');
+        const slider = document.getElementById('volume-slider');
+        
+        if (btnMute) {
+            btnMute.innerHTML = '<i class="fa-solid fa-volume-xmark"></i>';
+            btnMute.onclick = () => {
+                this.audio.muted = !this.audio.muted;
+                btnMute.innerHTML = this.audio.muted ? '<i class="fa-solid fa-volume-xmark"></i>' : '<i class="fa-solid fa-volume-high"></i>';
+                if (!this.audio.muted) this.audio.play().catch(e => console.log("Aguardando interação."));
+            };
+        }
+        if (slider) {
+            slider.value = volumeVisual;
+            slider.oninput = (e) => {
+                const volUser = parseFloat(e.target.value);
+                this.audio.volume = volUser * 0.5;
+                localStorage.setItem('musica_vol', volUser);
+            };
+        }
+    }
+
+    controlarMusica(tocar) {
+        if (!this.audio) return;
+        if (tocar && !this.audio.muted) {
+            this.audio.play().catch(e => console.log("Aguardando interação do usuário."));
+        } else {
+            this.audio.pause();
+        }
     }
 
     async init() {
         this.initDOMEvents();
         this.initLoginHibrido();
         this.initFirebaseAuthListen();
+        
+        // Garante que o usuário com apelido já veja a UI correta no carregamento
+        this.atualizarUIUsuario(); 
+        
+        this.initSeletorFlor();
         await this.carregarDados();
         this.renderizarHome();
         this.renderizarBiblioteca(this.obras);
         this.renderizarFavoritos();
+        
+        document.body.addEventListener('click', () => this.controlarMusica(true), { once: true });
+    }
+
+    atualizarUIUsuario() {
+        const profileNav = document.getElementById('user-profile-nav');
+        const userPhoto = document.getElementById('user-photo-nav');
+        const btnLoginMenu = document.getElementById('btn-login-menu');
+        
+        const commentLoggedOut = document.getElementById('comment-logged-out');
+        const commentLoggedIn = document.getElementById('comment-logged-in');
+        const userCommentAvatar = document.getElementById('user-comment-avatar');
+        const userCommentName = document.getElementById('user-comment-name');
+        
+        if (this.usuarioLogado) {
+            // Logado com Google
+            if(btnLoginMenu) btnLoginMenu.style.display = 'none';
+            if(profileNav) profileNav.style.display = 'flex';
+            if(userPhoto) {
+                userPhoto.src = this.usuarioLogado.photoURL;
+                userPhoto.style.filter = 'none';
+            }
+            if(commentLoggedOut) commentLoggedOut.style.display = 'none';
+            if(commentLoggedIn) commentLoggedIn.style.display = 'flex';
+            if(userCommentAvatar) {
+                userCommentAvatar.src = this.usuarioLogado.photoURL;
+                userCommentAvatar.style.filter = 'none';
+            }
+            if(userCommentName) userCommentName.innerText = this.usuarioLogado.displayName;
+            
+        } else if (this.apelido) {
+            // Logado com Apelido (Mostra a Flor Colorida)
+            if(btnLoginMenu) btnLoginMenu.style.display = 'none';
+            if(profileNav) profileNav.style.display = 'flex';
+            if(userPhoto) {
+                userPhoto.src = "imagem/flor-branca.png";
+                userPhoto.style.filter = `hue-rotate(${this.corFlor}) saturate(200%) brightness(1.2)`;
+            }
+            if(commentLoggedOut) commentLoggedOut.style.display = 'none';
+            if(commentLoggedIn) commentLoggedIn.style.display = 'flex';
+            if(userCommentAvatar) {
+                userCommentAvatar.src = "imagem/flor-branca.png";
+                userCommentAvatar.style.filter = `hue-rotate(${this.corFlor}) saturate(200%) brightness(1.2)`;
+            }
+            if(userCommentName) userCommentName.innerText = this.apelido;
+        } else {
+            // Deslogado
+            if(btnLoginMenu) btnLoginMenu.style.display = 'flex';
+            if(profileNav) profileNav.style.display = 'none';
+            if(commentLoggedOut) commentLoggedOut.style.display = 'block';
+            if(commentLoggedIn) commentLoggedIn.style.display = 'none';
+        }
+    }
+
+    initSeletorFlor() {
+        const grid = document.getElementById('grid-cores');
+        const preview = document.getElementById('preview-flor');
+        if(!grid || !preview) return;
+
+        preview.style.filter = `hue-rotate(${this.corFlor}) saturate(200%) brightness(1.2)`;
+
+        grid.innerHTML = '';
+        for (let i = 0; i < 12; i++) {
+            const hue = (i * 30) + 'deg';
+            const btn = document.createElement('div');
+            btn.style.width = '25px';
+            btn.style.height = '25px';
+            btn.style.borderRadius = '50%';
+            btn.style.cursor = 'pointer';
+            btn.style.filter = `hue-rotate(${hue}) saturate(200%) brightness(1.2)`;
+            btn.style.background = 'url("imagem/flor-branca.png") center/cover';
+            btn.onclick = () => {
+                this.corFlor = hue;
+                localStorage.setItem('celestial_cor_flor', hue);
+                preview.style.filter = `hue-rotate(${hue}) saturate(200%) brightness(1.2)`;
+            };
+            grid.appendChild(btn);
+        }
     }
 
     initLoginHibrido() {
@@ -58,7 +180,7 @@ class CelestialApp {
 
     logout() {
         if(this.usuarioLogado) signOut(auth).then(() => location.reload());
-        else { localStorage.removeItem('celestial_apelido'); location.reload(); }
+        else { localStorage.removeItem('celestial_apelido'); localStorage.removeItem('celestial_cor_flor'); location.reload(); }
     }
 
     initDOMEvents() {
@@ -102,62 +224,17 @@ class CelestialApp {
             if (user) {
                 this.usuarioLogado = user;
                 if(document.getElementById('modal-login')) document.getElementById('modal-login').style.display = 'none';
-                if(document.getElementById('btn-login-menu')) document.getElementById('btn-login-menu').style.display = 'none';
-                if(document.getElementById('user-profile-nav')) document.getElementById('user-profile-nav').style.display = 'flex';
-                if(document.getElementById('user-photo-nav')) document.getElementById('user-photo-nav').src = user.photoURL;
-                if(document.getElementById('comment-logged-out')) document.getElementById('comment-logged-out').style.display = 'none';
-                if(document.getElementById('comment-logged-in')) document.getElementById('comment-logged-in').style.display = 'flex';
-                if(document.getElementById('user-comment-avatar')) document.getElementById('user-comment-avatar').src = user.photoURL;
-                if(document.getElementById('user-comment-name')) document.getElementById('user-comment-name').innerText = user.displayName;
+                this.atualizarUIUsuario();
             }
         });
     }
 
     async carregarDados() {
         this.obras = [
-          {
-            "id": "meu-destino-e-a-mestra-da-seita",
-            "titulo": "Meu Destino é a Mestra da Seita",
-            "autor": "Celestial J. Mo Tian",
-            "status": "Em andamento",
-            "generos": ["Diferença de idade", "Fantasia", "Romance", "Sem harém", "Dia a dia", "Sistema"],
-            "sinopse": "Após perder tudo, Chen Yu desperta em um misterioso mundo de cultivo e acaba aparecendo no quarto da temida Mestra da Seita do Lótus Celestial, Lin Yue. Um encontro inesperado dá início a um vínculo capaz de unir dois mundos completamente diferentes.",
-            "pasta": "./obras/meu-destino-e-a-mestra-da-seita/",
-            "capa": "./obras/meu-destino-e-a-mestra-da-seita/capa.png", 
-            "capitulos": [
-              { "numero": 1, "titulo": "Capítulo 1 - Parte 1", "arquivo": "capitulo-1-1.pdf" },
-              { "numero": 2, "titulo": "Capítulo 1 - Parte 2", "arquivo": "capitulo-1-2.pdf" },
-              { "numero": 3, "titulo": "Capítulo 1 - Parte 3", "arquivo": "capitulo-1-3.pdf" }
-            ]
-          },
-          {
-            "id": "alem-do-nada",
-            "titulo": "Além do Nada",
-            "autor": "Celestial J. Mo Tian",
-            "status": "Em andamento",
-            "generos": ["Mistério", "Fantasia", "Sobrevivência", "Ancestral"],
-            "sinopse": "Após uma explosão, um jovem desperta em um vazio absoluto, onde o tempo perde o sentido e a solidão ameaça consuming sua própria existência. Quando finalmente desperta em uma misteriosa aldeia cercada por uma floresta ancestral, ele recebe uma nova chance de viver sob o nome de Ybirá.",
-            "pasta": "./obras/alem-do-nada/",
-            "capa": "./obras/alem-do-nada/capa.png", 
-            "capitulos": [
-              { "numero": 1, "titulo": "Capítulo 1", "arquivo": "capitulo-1.pdf" },
-              { "numero": 2, "titulo": "Capítulo 2", "arquivo": "capitulo-2.pdf" },
-              { "numero": 3, "titulo": "Capítulo 3", "arquivo": "capitulo-3.pdf" }
-            ]
-          },
-          {
-            "id": "cronicas-do-vilao-do-caos",
-            "titulo": "Crônicas do Vilão do Caos",
-            "autor": "Celestial J. Mo Tian",
-            "status": "Em andamento",
-            "generos": ["Vilão", "Fantasia", "Cultivo", "Seitas", "Sistema"],
-            "sinopse": "No mundo do cultivo, apenas os fortes têm o direito de sobreviver. Em meio à miséria da Cidade Baixa, um misterioso sistema começa a procurar um hospedeiro digno de herdar seu poder. Porém, suas exigências são cruéis, e cada escolha pode decidir o destino de um reino inteiro. Enquanto seitas, cultivadores e forças ocultas disputam o controle dos céus, alguém observa tudo nas sombras. E, quando o verdadeiro escolhido finalmente surgir, o mundo descobrirá que o caos não escolhe heróis... ele cria monstros.",
-            "pasta": "./obras/cronicas-do-vilao-do-caos/",
-            "capa": "./obras/cronicas-do-vilao-do-caos/capa.png",
-            "capitulos": [
-              { "numero": 1, "titulo": "Capítulo 1", "arquivo": "capitulo-1.pdf" }
-            ]
-          }
+          { "id": "meu-destino-e-a-mestra-da-seita", "titulo": "Meu Destino é a Mestra da Seita", "autor": "Celestial J. Mo Tian", "status": "Em andamento", "generos": ["Diferença de idade", "Fantasia", "Romance", "Sem harém", "Dia a dia", "Sistema"], "sinopse": "Após perder tudo, Chen Yu desperta em um misterioso mundo de cultivo e acaba aparecendo no quarto da temida Mestra da Seita do Lótus Celestial, Lin Yue.", "pasta": "./obras/meu-destino-e-a-mestra-da-seita/", "capa": "./obras/meu-destino-e-a-mestra-da-seita/capa.png", "capitulos": [{ "numero": 1, "titulo": "Capítulo 1 - Parte 1", "arquivo": "capitulo-1-1.pdf" }, { "numero": 2, "titulo": "Capítulo 1 - Parte 2", "arquivo": "capitulo-1-2.pdf" }, { "numero": 3, "titulo": "Capítulo 1 - Parte 3", "arquivo": "capitulo-1-3.pdf" }] },
+          { "id": "alem-do-nada", "titulo": "Além do Nada", "autor": "Celestial J. Mo Tian", "status": "Em andamento", "generos": ["Mistério", "Fantasia", "Sobrevivência", "Ancestral"], "sinopse": "Após uma explosão, um jovem desperta em um vazio absoluto.", "pasta": "./obras/alem-do-nada/", "capa": "./obras/alem-do-nada/capa.png", "capitulos": [{ "numero": 1, "titulo": "Capítulo 1", "arquivo": "capitulo-1.pdf" }, { "numero": 2, "titulo": "Capítulo 2", "arquivo": "capitulo-2.pdf" }, { "numero": 3, "titulo": "Capítulo 3", "arquivo": "capitulo-3.pdf" }] },
+          { "id": "cronicas-do-vilao-do-caos", "titulo": "Crônicas do Vilão do Caos", "autor": "Celestial J. Mo Tian", "status": "Em andamento", "generos": ["Vilão", "Fantasia", "Cultivo", "Seitas", "Sistema"], "sinopse": "No mundo do cultivo, apenas os fortes têm o direito de sobreviver.", "pasta": "./obras/cronicas-do-vilao-do-caos/", "capa": "./obras/cronicas-do-vilao-do-caos/capa.png", "capitulos": [{ "numero": 1, "titulo": "Capítulo 1", "arquivo": "capitulo-1.pdf" },
+             { "numero": 2, "titulo": "Capítulo 2", "arquivo": "capitulo-2.pdf" }] }
         ];
     }
 
@@ -179,12 +256,18 @@ class CelestialApp {
     renderizarHome() {
         if (this.obras.length === 0) return;
         const destaque = this.obras[0];
+        
+        // Atualiza textos do banner
         if(document.getElementById('banner-titulo')) document.getElementById('banner-titulo').innerText = destaque.titulo;
         if(document.getElementById('banner-sinopse')) document.getElementById('banner-sinopse').innerText = destaque.sinopse;
-        const banner = document.getElementById('banner-principal');
-        if (banner) banner.style.backgroundImage = `url('${destaque.capa}')`;
+        
+        // Atualiza a capa (Área 1 do seu desenho)
+        const imgCapa = document.getElementById('banner-capa-img');
+        if (imgCapa) imgCapa.src = destaque.capa;
+        
         const btnBtn = document.getElementById('banner-btn');
         if (btnBtn) btnBtn.onclick = () => this.abrirObra(destaque.id);
+        
         const gridDestaques = document.getElementById('grid-destaques');
         const gridRecentes = document.getElementById('grid-recentes');
         if (gridDestaques) { gridDestaques.innerHTML = ''; gridDestaques.appendChild(this.criarCardObra(this.obras[0])); }
@@ -278,34 +361,69 @@ class CelestialApp {
         if (this.unsubComentarios) this.unsubComentarios();
         const containerLista = document.getElementById('container-comentarios-lista');
         const q = query(collection(db, `obras/${obraId}/comentarios`), orderBy("dataCriacao", "asc"));
+        
         this.unsubComentarios = onSnapshot(q, (snapshot) => {
             if (!containerLista) return;
             containerLista.innerHTML = '';
-            if (snapshot.empty) { containerLista.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 15px 0;">Seja o primeiro a comentar!</p>`; return; }
+            
+            if (snapshot.empty) { 
+                containerLista.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 15px 0;">Seja o primeiro a comentar!</p>`; 
+                return; 
+            }
+            
             snapshot.forEach((doc) => {
                 const dados = doc.data();
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'card-comentario-item';
-                itemDiv.innerHTML = `<img src="${dados.userFoto}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.05);"><div style="flex:1;"><div><span class="comment-user-name">${dados.userName}</span><span class="comment-date">${dados.dataString || ''}</span></div><p class="comment-text-body">${dados.texto}</p></div>`;
+                
+                // Aplica o filtro de cor na foto apenas se for um apelido (sem Google Auth)
+                const filtroCSS = dados.corFlor ? `filter: hue-rotate(${dados.corFlor}) saturate(200%) brightness(1.2);` : '';
+                
+                itemDiv.innerHTML = `
+                    <img src="${dados.userFoto}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1px solid rgba(255,255,255,0.05); ${filtroCSS}">
+                    <div style="flex:1;">
+                        <div>
+                            <span class="comment-user-name">${dados.userName}</span>
+                            <span class="comment-date">${dados.dataString || ''}</span>
+                        </div>
+                        <p class="comment-text-body">${dados.texto}</p>
+                    </div>
+                `;
                 containerLista.appendChild(itemDiv);
             });
         }, (err) => console.error("Erro Firestore:", err));
     }
 
     async enviarComentarioFirebase() {
-        if (!this.usuarioLogado) return alert("Você precisa estar logado com o Google para comentar.");
+        if (!this.usuarioLogado && !this.apelido) return alert("Você precisa definir um apelido ou fazer login para comentar.");
         const input = document.getElementById('input-comentario');
         if (!input || !this.obraAtual) return;
         const textoComentario = input.value.trim();
         if (textoComentario === '') return;
+        
         try {
             const dataAtual = new Date();
             const formatarData = `${String(dataAtual.getDate()).padStart(2, '0')}/${String(dataAtual.getMonth() + 1).padStart(2, '0')}/${dataAtual.getFullYear()}`;
+            
+            const uid = this.usuarioLogado ? this.usuarioLogado.uid : 'anon_' + Date.now();
+            const nome = this.usuarioLogado ? this.usuarioLogado.displayName : this.apelido;
+            const foto = this.usuarioLogado ? this.usuarioLogado.photoURL : 'imagem/flor-branca.png';
+            const cor = this.usuarioLogado ? null : this.corFlor; // Envia a cor escolhida
+
             await addDoc(collection(db, `obras/${this.obraAtual.id}/comentarios`), {
-                texto: textoComentario, userId: this.usuarioLogado.uid, userName: this.usuarioLogado.displayName, userFoto: this.usuarioLogado.photoURL, dataCriacao: dataAtual.getTime(), dataString: formatarData
+                texto: textoComentario, 
+                userId: uid, 
+                userName: nome, 
+                userFoto: foto, 
+                corFlor: cor, 
+                dataCriacao: dataAtual.getTime(), 
+                dataString: formatarData
             });
             input.value = '';
-        } catch (e) { alert("Erro ao enviar comentário."); console.error(e); }
+        } catch (e) { 
+            alert("Erro ao enviar comentário. Verifique as suas Regras do Firestore!"); 
+            console.error(e); 
+        }
     }
 
     abrirObra(id) {
@@ -357,6 +475,7 @@ class CelestialApp {
     }
 
     abrirLeitor(capIndex) {
+        this.controlarMusica(false); 
         if (!this.obraAtual || !this.obraAtual.capitulos[capIndex]) return;
         this.capituloAtualIdx = capIndex;
         const cap = this.obraAtual.capitulos[capIndex];
@@ -377,7 +496,10 @@ class CelestialApp {
         this.navegar('leitor');
     }
 
-    voltarParaObra() { if (this.obraAtual) this.abrirObra(this.obraAtual.id); }
+    voltarParaObra() { 
+        this.controlarMusica(true); 
+        if (this.obraAtual) this.abrirObra(this.obraAtual.id); 
+    }
 }
 
 window.addEventListener('DOMContentLoaded', () => { window.app = new CelestialApp(); });
